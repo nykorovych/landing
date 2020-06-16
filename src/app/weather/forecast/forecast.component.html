@@ -1,1 +1,9 @@
-<p>forecast works!</p>
+<ul class="list-group">
+  <li
+    class="list-group-item weather-item"
+    *ngFor="let forecast of forecast$ | async"
+  >
+    <p class="temp">{{ forecast.temp | number: "1.0-0" }} °C</p>
+    <p class="date">{{ forecast.dataString | date: "EEEE " }}</p>
+  </li>
+</ul>
