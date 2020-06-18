@@ -1,7 +1,21 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { map, switchMap, pluck, mergeMap, filter, toArray, share } from 'rxjs/operators';
+// throwError - from rxjs --> returns a new observable
+// catchError - rxjs/operatios --> just got some value transforms it and spits new value (transformational operators)
+import { Observable, of, throwError } from 'rxjs';
+import {
+  map,
+  switchMap,
+  pluck,
+  mergeMap,
+  filter,
+  toArray,
+  share,
+  tap,
+  catchError,
+  retry
+} from 'rxjs/operators';
 import { HttpParams, HttpClient } from '@angular/common/http';
+import { NotificationsService } from '../notifications/notifications.service';
 
 interface OpenWeatherResponse {
   list: {
@@ -17,7 +31,10 @@ interface OpenWeatherResponse {
 })
 export class WeatherService {
   private url = 'https://api.openweathermap.org/data/2.5/forecast';
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private notificationsService: NotificationsService
+  ) {}
 
   getForecast() {
     return this.getCurrentLocation().pipe(
@@ -69,7 +86,30 @@ export class WeatherService {
           observer.error(err);
         }
       );
-    });
+    }).pipe(
+      retry(2),
+      // tap operetor get get 3 arguments (next?: (x: Coordinates) => void, error?: (e: any) => void, complete?: () => void)
+      tap(
+        () => {
+          this.notificationsService.addSuccess('Got location');
+        }
+        // !!! peope just dont know that tap takes the second, third arguments :-)
+        // () => {
+        //   this.notificationsService.addError('Failed to get location');
+        // }
+      ),
+      catchError((err) => {
+        // 1# handle the err
+        // -----------can add some default coordinats...
+
+        this.notificationsService.addError('You are an idiol GLICK ALLOW')
+
+        // 2# return a NEW observable
+        // can do like return new Observable(observer => { observer.error(err)})
+
+        return throwError(err)
+      })
+    );
   }
   // EASY WAY WITHOUT RXJS
   // getCurrentLocation() {
