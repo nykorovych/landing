@@ -12,7 +12,7 @@ import {
   share,
   tap,
   catchError,
-  retry
+  retry,
 } from 'rxjs/operators';
 import { HttpParams, HttpClient } from '@angular/common/http';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -86,6 +86,8 @@ export class WeatherService {
           observer.error(err);
         }
       );
+
+      // Your API key is: 44a854579b274cee89bc523d4d61dcba
     }).pipe(
       retry(2),
       // tap operetor get get 3 arguments (next?: (x: Coordinates) => void, error?: (e: any) => void, complete?: () => void)
@@ -102,12 +104,12 @@ export class WeatherService {
         // 1# handle the err
         // -----------can add some default coordinats...
 
-        this.notificationsService.addError('You are an idiol GLICK ALLOW')
+        this.notificationsService.addError('You are an idiol GLICK ALLOW');
 
         // 2# return a NEW observable
         // can do like return new Observable(observer => { observer.error(err)})
 
-        return throwError(err)
+        return throwError(err);
       })
     );
   }
