@@ -1,8 +1,16 @@
 import { Injectable } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { HttpParams } from '@angular/common/http';
+import { map, switchMap, tap, pluck } from 'rxjs/operators';
+import { HttpParams, HttpClient } from '@angular/common/http';
 
+interface Article {
+  title: string;
+  url: string;
+}
+interface NewApiResponse {
+  totalResult: number;
+  articles: Article[];
+}
 @Injectable({
   providedIn: 'root',
 })
@@ -12,20 +20,34 @@ export class NewsApiService {
   private apiKey = '44a854579b274cee89bc523d4d61dcba';
   private country = 'us';
 
-  pagesInput: Subject<number>;
-  pagesOutput: Observable<any>;
-  numberOfPages: Observable<any>;
+  private pagesInput: Subject<number>;
+  pagesOutput: Observable<Article[]>;
+  numberOfPages: Subject<any>;
 
-  constructor() {
+  constructor(private http: HttpClient) {
+    this.numberOfPages = new Subject();
     this.pagesInput = new Subject();
     this.pagesOutput = this.pagesInput.pipe(
-      map(page => {
+      map((page) => {
         return new HttpParams()
-        .set('apiKey', this.apiKey)
-        .set('coutry', this.country)
-        .set('pageSize', String(this.pageSize))
-        .set('page', String(page))
-      })
+          .set('apiKey', this.apiKey)
+          .set('coutry', this.country)
+          .set('pageSize', String(this.pageSize))
+          .set('page', String(page));
+      }),
+      switchMap((params) => {
+        return this.http.get<NewApiResponse>(this.url, { params });
+      }),
+      tap((response) => {
+        const totalePages = Math.ceil(response.totalResult / this.pageSize);
+        // 55 / 10 = 5.5 --> 6 (Math.ceil())
+        this.numberOfPages.next(totalePages);
+      }),
+      pluck('acticles')
     );
+  }
+
+  getPages(page) {
+    this.pagesInput.next(page);
   }
 }
