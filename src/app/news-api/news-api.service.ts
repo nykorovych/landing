@@ -3,9 +3,12 @@ import { Subject, Observable } from 'rxjs';
 import { map, switchMap, tap, pluck } from 'rxjs/operators';
 import { HttpParams, HttpClient } from '@angular/common/http';
 
-interface Article {
+export interface Article {
   title: string;
   url: string;
+  source: {
+    name: string;
+  };
 }
 interface NewApiResponse {
   totalResult: number;
@@ -16,11 +19,12 @@ interface NewApiResponse {
 })
 export class NewsApiService {
   private url = 'https://newsapi.org/v2/top-headlines';
+
   private pageSize = 10;
   private apiKey = '44a854579b274cee89bc523d4d61dcba';
   private country = 'us';
 
-  private pagesInput: Subject<number>;
+  pagesInput: Subject<number>;
   pagesOutput: Observable<Article[]>;
   numberOfPages: Subject<any>;
 
@@ -29,13 +33,15 @@ export class NewsApiService {
     this.pagesInput = new Subject();
     this.pagesOutput = this.pagesInput.pipe(
       map((page) => {
+        console.log(page);
         return new HttpParams()
-          .set('apiKey', this.apiKey)
-          .set('coutry', this.country)
+          .set('country', this.country)
           .set('pageSize', String(this.pageSize))
-          .set('page', String(page));
+          .set('page', String(page))
+          .set('apiKey', this.apiKey);
       }),
       switchMap((params) => {
+        console.log(params);
         return this.http.get<NewApiResponse>(this.url, { params });
       }),
       tap((response) => {
@@ -43,11 +49,12 @@ export class NewsApiService {
         // 55 / 10 = 5.5 --> 6 (Math.ceil())
         this.numberOfPages.next(totalePages);
       }),
-      pluck('acticles')
+      pluck('articles')
     );
   }
 
   getPages(page) {
+    console.log(page);
     this.pagesInput.next(page);
   }
 }
