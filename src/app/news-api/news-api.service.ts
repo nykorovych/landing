@@ -32,7 +32,7 @@ export class NewsApiService {
     this.numberOfPages = new Subject();
     this.pagesInput = new Subject();
     this.pagesOutput = this.pagesInput.pipe(
-      map((page) => {
+      map((page:any) => {
         console.log(page);
         return new HttpParams()
           .set('country', this.country)
@@ -40,11 +40,11 @@ export class NewsApiService {
           .set('page', String(page))
           .set('apiKey', this.apiKey);
       }),
-      switchMap((params) => {
+      switchMap((params:any) => {
         console.log(params);
         return this.http.get<NewApiResponse>(this.url, { params });
       }),
-      tap((response) => {
+      tap((response: { totalResult: number; }) => {
         const totalePages = Math.ceil(response.totalResult / this.pageSize);
         // 55 / 10 = 5.5 --> 6 (Math.ceil())
         this.numberOfPages.next(totalePages);
@@ -53,7 +53,7 @@ export class NewsApiService {
     );
   }
 
-  getPages(page) {
+  getPages(page:any) {
     console.log(page);
     this.pagesInput.next(page);
   }
